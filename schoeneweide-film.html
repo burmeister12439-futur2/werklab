@@ -108,7 +108,7 @@ body{background:#04070b;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",
   <div class="dots" id="dots"></div>
 
   <div class="card on" id="title"><div class="glowdot"></div>
-    <div class="inner"><div class="eyebrow">Eine Einstimmung</div><div class="h">Kommen Sie mit nach Schöneweide.</div></div>
+    <div class="inner"><div class="eyebrow">Eine Einstimmung</div><div class="h">Hier reibt sich Zukunft.</div></div>
   </div>
 
   <div class="card" id="outro"><div class="glowdot"></div>
@@ -129,7 +129,7 @@ body{background:#04070b;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",
 
 <script>
 (function(){
-  var CAPS=["Hier stand die Industrie. Hallen, Schlote, die Spree.", "Sehen Sie den Ort, der sich neu erfindet.", "Aus Werkhallen wird Wissenschaft.", "Neben dem Alten wächst Neues.", "Und mittendrin: Menschen, die weiterdenken. Wie Sie."];
+  var CAPS=["Schöneweide im Umbruch. Alt und Neu, dicht an dicht.", "Wohnen oder Gewerbe? Erhalt oder Neubau?", "Solche Zielkonflikte lassen sich nicht wegwünschen.", "Aber sie sind der Rohstoff für Neues.", "Wir arbeiten mitten darin. Denken Sie mit."];
   var slides=[document.getElementById('s0'),document.getElementById('s1'),document.getElementById('s2'),
               document.getElementById('s3'),document.getElementById('s4')];
   var cap=document.getElementById('cap'), capline=document.getElementById('capline');
@@ -194,7 +194,7 @@ body{background:#04070b;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",
   skip.addEventListener('click', endFilm);
   document.getElementById('btnReplay').addEventListener('click', run);
   document.getElementById('btnEnter').addEventListener('click', function(){
-    if(window.parent!==window){ try{ window.parent.postMessage('werklab-enter','*'); }catch(e){} return; }
+    if(window.parent!==window){ try{ window.parent.postMessage('werklab-enter','*'); }catch(e){} }
     run();
   });
 
