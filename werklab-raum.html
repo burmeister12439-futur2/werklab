@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Das WerkLab</title>
+<style>
+:root{--bg:#0c1219;--panel:#121b26;--ink:#e9eff5;--muted:#9aa7b4;--line:rgba(255,255,255,.09);
+  --green:#35E0A0;--teal:#24D3C4;--blue:#3AA6FF;--warm:#FFC24B;--hot:#FF7A20}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ---------- STAGE MACHINE ---------- */
+.stage{display:none;opacity:0;transition:opacity .9s ease}
+.stage.on{display:block;opacity:1}
+.stage.fading{opacity:0}
+.center{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:40px 22px}
+
+/* ---------- FACADE / ROOM ---------- */
+.facade-wrap{position:relative;width:100%;max-width:760px;margin:0 auto;aspect-ratio:16/11}
+.night{position:absolute;inset:0;border-radius:18px;overflow:hidden;
+  background:radial-gradient(120% 80% at 50% 12%,#1b3550 0%,#101a26 55%,#0a121b 100%)}
+/* soft energy field */
+.spark{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--teal);opacity:.0;
+  filter:blur(.4px);animation:float 6s ease-in-out infinite}
+@keyframes float{0%{transform:translateY(8px);opacity:0}
+  30%{opacity:.55}70%{opacity:.35}100%{transform:translateY(-26px);opacity:0}}
+
+.building{position:absolute;left:50%;top:16%;transform:translateX(-50%);width:60%;height:70%;
+  background:linear-gradient(180deg,#25313f,#1a2430);border:1px solid rgba(255,255,255,.08);
+  border-radius:6px 6px 4px 4px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+/* sawtooth roof (Industriekultur) */
+.roof{position:absolute;left:50%;top:calc(16% - 6.2%);transform:translateX(-50%);width:60%;height:7%;
+  background:repeating-linear-gradient(115deg,#2b3947 0 14px,#1f2a36 14px 28px)}
+.win{position:absolute;width:9%;height:11%;background:var(--warm);border-radius:2px;
+  box-shadow:0 0 14px rgba(255,194,75,.55);opacity:.9}
+.sign-ext{position:absolute;left:50%;top:20%;transform:translateX(-50%);
+  font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);font-weight:800;white-space:nowrap}
+.name-ext{position:absolute;left:50%;top:24.5%;transform:translateX(-50%);
+  font-size:19px;font-weight:800;color:#fff;letter-spacing:.02em;white-space:nowrap}
+
+/* doorway + swinging leaf */
+.doorway{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);width:15%;height:34%;
+  border-radius:4px 4px 0 0;background:radial-gradient(120% 120% at 50% 40%,#ffe6a8,#ffbe57 60%,#e79a2f 100%);
+  box-shadow:0 0 34px rgba(255,190,80,.5);perspective:900px}
+.door{position:absolute;inset:0;transform-origin:left center;transition:transform 1.15s cubic-bezier(.5,.05,.3,1);
+  background:linear-gradient(180deg,#3a4a5c,#2a3644);border:1px solid rgba(255,255,255,.12);
+  border-radius:4px 4px 0 0;backface-visibility:hidden}
+.door::after{content:"";position:absolute;top:44%;right:12%;width:7%;height:9%;border-radius:50%;
+  background:var(--warm);box-shadow:0 0 6px rgba(255,194,75,.7)}
+.door.open{transform:rotateY(-108deg)}
+.door.closing{transform:rotateY(0deg)}
+
+/* ---------- TEXT BLOCKS ---------- */
+.eyebrow{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--teal);font-weight:800;margin-bottom:14px}
+.big{font-size:clamp(26px,5vw,40px);font-weight:800;letter-spacing:-.01em;line-height:1.18;margin-bottom:10px}
+.lead{font-size:clamp(17px,2.4vw,21px);color:var(--ink);max-width:60ch;margin:6px auto}
+.muted{color:var(--muted);font-size:16px;max-width:58ch;margin:14px auto 0;line-height:1.65}
+.spacer{height:26px}
+
+.cta{background:linear-gradient(100deg,var(--green),var(--blue));color:#04120a;font-weight:800;border:none;
+  padding:15px 40px;border-radius:14px;font-size:18px;cursor:pointer;box-shadow:0 12px 30px rgba(53,224,160,.25);
+  transition:transform .12s,filter .12s}
+.cta:hover{filter:brightness(1.06)}
+.cta:active{transform:translateY(1px)}
+.cta.small{padding:12px 26px;font-size:15px}
+.ghost{background:none;border:1px solid var(--line);color:var(--teal);font-weight:700;padding:12px 22px;
+  border-radius:12px;font-size:15px;cursor:pointer;transition:border-color .12s,color .12s}
+.ghost:hover{border-color:var(--teal);color:#fff}
+
+/* welcome room glow */
+.roomglow{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.2s ease;
+  background:radial-gradient(80% 60% at 50% 30%,rgba(53,224,160,.10),rgba(58,166,255,.06) 45%,transparent 70%)}
+.roomglow.on{opacity:1}
+
+/* ---------- QUIZ / SIGN ---------- */
+.qwrap{max-width:640px;margin:0 auto;text-align:left}
+.answers{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.ans{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;
+  color:var(--ink);font-size:16.5px;line-height:1.5;cursor:pointer;transition:border-color .15s,background .15s,transform .1s}
+.ans:hover{border-color:var(--teal);background:rgba(36,211,196,.06)}
+.ans:active{transform:translateY(1px)}
+.ans .n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(58,166,255,.14);color:var(--blue);font-weight:800;font-size:13px}
+.react{max-width:600px;margin:0 auto;font-size:clamp(18px,2.6vw,23px);line-height:1.5;color:var(--ink)}
+.react b{color:var(--green)}
+.sign{max-width:560px;margin:30px auto 0;display:flex;flex-direction:column;gap:14px}
+.plate{position:relative;background:linear-gradient(180deg,#16212e,#101923);border:1px solid var(--line);
+  border-radius:14px;padding:18px 20px;font-size:18px;font-weight:700;color:var(--ink);cursor:pointer;
+  transition:border-color .15s,transform .1s}
+.plate:hover{border-color:var(--green)}
+.plate:active{transform:translateY(1px)}
+.plate .tiny{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-top:4px}
+
+.exitbtn{position:fixed;top:16px;right:16px;z-index:20;background:rgba(18,27,38,.82);
+  border:1px solid var(--line);color:var(--muted);font-weight:700;font-size:13px;letter-spacing:.04em;
+  padding:9px 15px;border-radius:999px;cursor:pointer;backdrop-filter:blur(4px);transition:border-color .15s,color .15s}
+.exitbtn:hover{border-color:var(--green);color:#fff}
+.tallybtn{position:fixed;bottom:16px;left:16px;z-index:20;background:rgba(18,27,38,.82);
+  border:1px solid var(--line);color:var(--muted);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+  padding:8px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(4px);transition:border-color .15s,color .15s}
+.tallybtn:hover{border-color:var(--teal);color:#fff}
+.tallybox{position:fixed;bottom:58px;left:16px;z-index:21;width:min(340px,88vw);
+  background:rgba(14,21,30,.97);border:1px solid var(--line);border-radius:14px;padding:16px 18px 14px;
+  box-shadow:0 20px 50px rgba(0,0,0,.5);backdrop-filter:blur(6px)}
+.tallybox .tclose{position:absolute;top:12px;right:14px;font-size:12px;color:var(--muted);cursor:pointer}
+.tallybox .tclose:hover{color:#fff}
+.tallybox .teye{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);font-weight:800;margin-bottom:12px}
+.tallybox .tq{font-size:13px;font-weight:700;color:var(--ink);margin:10px 0 6px}
+.tallybox ul{list-style:none}
+.tallybox li{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted);
+  padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.tallybox li b{color:var(--green);font-variant-numeric:tabular-nums}
+.tallybox .tnote{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.footnote{color:var(--muted);font-size:13px;line-height:1.5;max-width:60ch;margin:26px auto 0}
+.footnote a{color:var(--teal)}
+
+/* ============ GAME (inlined) ============ */
+.wrap{max-width:920px;margin:0 auto;padding:26px 22px 40px}
+h1.gt{font-size:28px;font-weight:800;letter-spacing:-.01em;margin:6px 0 4px}
+.sub{color:var(--muted);font-size:16px}
+.levels{display:flex;gap:8px;margin:14px 0 0;flex-wrap:wrap}
+.lvl{border:1px solid var(--line);background:var(--panel);color:var(--muted);font-weight:700;padding:8px 16px;border-radius:999px;cursor:pointer;font-size:14px}
+.lvl.on{border-color:var(--teal);color:#fff;background:rgba(36,211,196,.08)}
+.howto{margin-top:14px;color:var(--ink);font-size:15px;opacity:.9}
+.scene{margin:20px 0 6px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#0b1f2b;
+  filter:grayscale(1) brightness(.62);transition:filter .9s ease}
+.scene.found{filter:none;animation:pop .7s ease}
+@keyframes pop{0%{transform:scale(1)}30%{transform:scale(1.012)}100%{transform:scale(1)}}
+.scene svg{width:100%;height:auto;display:block}
+.lit{opacity:0;transition:opacity .9s ease}
+.scene.found .lit{opacity:1}
+.status{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0 4px}
+.warm{flex:1;min-width:240px}
+.warm .lab{display:flex;justify-content:space-between;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.warm .lab b{color:var(--ink);letter-spacing:0}
+.track{height:12px;background:#0b1420;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.track i{display:block;height:100%;width:0;background:var(--blue);transition:width .25s,background .25s}
+.chips{display:flex;gap:10px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:700;background:var(--panel);white-space:nowrap}
+.chip .who{color:var(--muted);font-weight:600;font-size:12px;display:block}
+.chip.ok{border-color:rgba(53,224,160,.5)} .chip.ok .st{color:var(--green)}
+.chip.wob{border-color:rgba(255,194,75,.5)} .chip.wob .st{color:var(--warm)}
+.chip.out{border-color:rgba(255,122,32,.55)} .chip.out .st{color:var(--hot)}
+.pols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.grp{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.grp h3{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-bottom:2px}
+.grp .side{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.sl{margin:12px 0}
+.sl span{display:block;font-size:14px;margin-bottom:5px}
+.sl input[type=range]{width:100%;accent-color:var(--green)}
+.card{margin-top:22px;border:1px solid rgba(53,224,160,.4);border-radius:16px;
+  background:linear-gradient(180deg,rgba(53,224,160,.10),rgba(18,27,38,.7));padding:24px 26px;
+  opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s;pointer-events:none}
+.card.show{opacity:1;transform:none;pointer-events:auto}
+.card .tag{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);font-weight:800}
+.card h2{font-size:23px;font-weight:800;margin:6px 0 12px}
+.card h2 .star{color:var(--warm)}
+.card p{font-size:16.5px;line-height:1.6;color:var(--ink)}
+.card .price{margin-top:12px;color:var(--muted);font-style:italic}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.btn2{background:none;border:1px solid var(--line);color:var(--teal);font-weight:700;padding:10px 16px;border-radius:10px;font-size:14px;cursor:pointer}
+.btn2:hover{border-color:var(--teal);color:#fff}
+.btn2.on{border-color:var(--teal);color:#fff;background:rgba(36,211,196,.08)}
+.panel2{margin-top:16px;border-top:1px solid var(--line);padding-top:18px;display:none}
+.panel2.show{display:block}
+.band svg{width:100%;max-width:440px;height:auto;display:block;margin:2px auto 0}
+.band .bnote{color:var(--muted);font-size:15px;line-height:1.6;max-width:64ch;margin:12px auto 0;text-align:center}
+.band .bnote b{color:var(--ink)}
+.longstory p{color:var(--ink);font-size:16px;line-height:1.65}
+.hint{margin-top:14px;color:var(--muted);font-size:14px;min-height:20px}
+.src{margin-top:22px;color:var(--muted);font-size:13px;line-height:1.5}
+.src a{color:var(--teal)}
+.gamebar{max-width:920px;margin:8px auto 0;padding:0 22px;display:flex;justify-content:flex-end}
+@media(max-width:680px){.pols{grid-template-columns:1fr}.building{width:74%}.roof{width:74%}.doorway{width:19%}}
+</style>
+</head>
+<body>
+<div class="roomglow" id="roomglow"></div>
+<button class="exitbtn" id="btnExit" hidden>Tür &nbsp;·&nbsp; raus</button>
+<button class="tallybtn" id="btnTally" hidden>Zählung</button>
+<div class="tallybox" id="tallybox" hidden>
+  <div class="tclose" id="btnTallyClose">schließen</div>
+  <div class="teye">Zählung auf diesem Gerät</div>
+  <div class="tq">Wissen Sie, was ein radikaler Kompromiss ist?</div>
+  <ul id="tallyQ"></ul>
+  <div class="tq">Schild am Ausgang</div>
+  <ul id="tallyS"></ul>
+  <div class="tnote">Zählt lokal in diesem Browser. Eine Zählung über alle Besuchenden hinweg lässt sich mit einem kleinen Zähldienst ergänzen.</div>
+</div>
+
+<!-- ============ STAGE 1: OUTSIDE ============ -->
+<section class="stage on" id="st-outside">
+  <div class="center">
+    <div class="facade-wrap">
+      <div class="night" id="night1"></div>
+      <div class="roof"></div>
+      <div class="building"></div>
+      <div class="sign-ext">Zukunft im Versuch</div>
+      <div class="name-ext">WerkLab</div>
+      <div class="doorway"><div class="door" id="door1"></div></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="lead">Wollen Sie uns bei der Arbeit zusehen?</p>
+    <p class="muted">Kommen Sie rein und werden Sie ein Teil des WerkLabs.</p>
+    <div class="spacer"></div>
+    <button class="cta" id="btnYes">Ja</button>
+  </div>
+</section>
+
+<!-- ============ STAGE 2: WELCOME ============ -->
+<section class="stage" id="st-welcome">
+  <div class="center">
+    <div class="eyebrow">Sie sind drin</div>
+    <h2 class="big">Willkommen im WerkLab.</h2>
+    <p class="lead">Wir haben uns die Aufgabe gestellt, Zielkonflikte als Einladung zum Weiterdenken zu verstehen. Unsere Antwort sind radikale Kompromisse.</p>
+    <p class="muted">Sie werden sich fragen: Was ist das? Verstehen wir. Deshalb werden Sie bitte unser:e Mitdenkpartner:in. Das hier ist unser Versuchsbau. Folgen Sie den kurzen Anweisungen. Und sagen Sie uns am Ende, ob Sie verstanden haben, was radikale Kompromisse sind.</p>
+    <div class="spacer"></div>
+    <button class="cta" id="btnStart">Versuch starten</button>
+  </div>
+</section>
+
+<!-- ============ STAGE 3: GAME ============ -->
+<section class="stage" id="st-game">
+  <div class="wrap">
+    <div class="eyebrow">Der Versuch · Radikale Kompromisse</div>
+    <h1 class="gt">Finde den radikalen Kompromiss</h1>
+    <p class="sub" id="sub">Behrens-Ufer: Wohnen gegen Gewerbe</p>
+    <div class="levels">
+      <button class="lvl on" data-c="behrens">Behrens-Ufer</button>
+      <button class="lvl" data-c="halle">Rathenau-Hallen</button>
+    </div>
+    <div class="howto">Schieben Sie die vier Regler, bis beide Seiten mitgehen. Wärmer heißt näher dran. Ziehen Sie eine Forderung zu weit, springt eine Seite ab.</div>
+
+    <!-- SCENE: Behrens -->
+    <div class="scene" id="sceneBehrens">
+      <svg viewBox="0 0 800 300" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#12314a"/><stop offset="1" stop-color="#1b4a5f"/></linearGradient>
+          <linearGradient id="skyF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a4a63"/><stop offset="1" stop-color="#e9b06a"/></linearGradient>
+          <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffe6a8"/><stop offset="1" stop-color="#ffe6a8" stop-opacity="0"/></radialGradient>
+        </defs>
+        <rect x="0" y="0" width="800" height="300" fill="url(#sky)"/>
+        <rect class="lit" x="0" y="0" width="800" height="300" fill="url(#skyF)"/>
+        <circle class="lit" cx="660" cy="70" r="70" fill="url(#sun)"/>
+        <circle class="lit" cx="660" cy="70" r="24" fill="#ffdf8f"/>
+        <rect x="0" y="232" width="800" height="68" fill="#20455a"/>
+        <rect class="lit" x="0" y="232" width="800" height="68" fill="#2f7fb0"/>
+        <g class="lit" fill="#bfe6ff" opacity=".5"><rect x="60" y="250" width="60" height="3" rx="1.5"/><rect x="220" y="262" width="80" height="3" rx="1.5"/><rect x="430" y="248" width="70" height="3" rx="1.5"/><rect x="600" y="266" width="90" height="3" rx="1.5"/></g>
+        <rect x="0" y="212" width="800" height="22" fill="#5a5f52"/>
+        <rect class="lit" x="0" y="212" width="800" height="22" fill="#3f8f5e"/>
+        <g><rect x="70" y="120" width="120" height="94" fill="#2a3542"/><rect x="220" y="92" width="140" height="122" fill="#313d4c"/><rect x="390" y="140" width="110" height="74" fill="#2a3542"/><rect x="520" y="104" width="150" height="110" fill="#313d4c"/></g>
+        <g class="lit" fill="#7fd8c8" opacity=".85"><rect x="78" y="196" width="104" height="16" rx="2"/><rect x="228" y="196" width="124" height="16" rx="2"/><rect x="398" y="196" width="94" height="16" rx="2"/><rect x="528" y="196" width="134" height="16" rx="2"/></g>
+        <g class="lit" fill="#ffd97a">
+          <rect x="86" y="132" width="12" height="14"/><rect x="110" y="132" width="12" height="14"/><rect x="134" y="132" width="12" height="14"/><rect x="158" y="132" width="12" height="14"/><rect x="86" y="158" width="12" height="14"/><rect x="134" y="158" width="12" height="14"/>
+          <rect x="236" y="104" width="12" height="14"/><rect x="260" y="104" width="12" height="14"/><rect x="308" y="104" width="12" height="14"/><rect x="332" y="104" width="12" height="14"/><rect x="236" y="130" width="12" height="14"/><rect x="284" y="130" width="12" height="14"/><rect x="332" y="130" width="12" height="14"/><rect x="236" y="156" width="12" height="14"/><rect x="308" y="156" width="12" height="14"/>
+          <rect x="406" y="152" width="12" height="14"/><rect x="430" y="152" width="12" height="14"/><rect x="478" y="152" width="12" height="14"/>
+          <rect x="536" y="116" width="12" height="14"/><rect x="560" y="116" width="12" height="14"/><rect x="608" y="116" width="12" height="14"/><rect x="632" y="116" width="12" height="14"/><rect x="536" y="142" width="12" height="14"/><rect x="584" y="142" width="12" height="14"/><rect x="632" y="142" width="12" height="14"/><rect x="536" y="168" width="12" height="14"/><rect x="608" y="168" width="12" height="14"/>
+        </g>
+        <g class="lit"><rect x="200" y="200" width="4" height="12" fill="#6b5533"/><circle cx="202" cy="198" r="10" fill="#3f8f5e"/><rect x="376" y="200" width="4" height="12" fill="#6b5533"/><circle cx="378" cy="198" r="10" fill="#3f8f5e"/><rect x="506" y="200" width="4" height="12" fill="#6b5533"/><circle cx="508" cy="198" r="10" fill="#3f8f5e"/></g>
+        <g class="lit" fill="#e9eff5"><circle cx="150" cy="220" r="3"/><rect x="148.5" y="223" width="3" height="8" rx="1.5"/><circle cx="300" cy="223" r="3"/><rect x="298.5" y="226" width="3" height="8" rx="1.5"/><circle cx="470" cy="221" r="3"/><rect x="468.5" y="224" width="3" height="8" rx="1.5"/><circle cx="560" cy="224" r="3"/><rect x="558.5" y="227" width="3" height="8" rx="1.5"/><circle cx="640" cy="221" r="3"/><rect x="638.5" y="224" width="3" height="8" rx="1.5"/></g>
+      </svg>
+    </div>
+
+    <!-- SCENE: Halle -->
+    <div class="scene" id="sceneHalle" style="display:none">
+      <svg viewBox="0 0 800 300" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="hsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#231f2a"/><stop offset="1" stop-color="#33303a"/></linearGradient>
+          <linearGradient id="hskyF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3550"/><stop offset="1" stop-color="#e0a67a"/></linearGradient>
+        </defs>
+        <rect x="0" y="0" width="800" height="300" fill="url(#hsky)"/>
+        <rect class="lit" x="0" y="0" width="800" height="300" fill="url(#hskyF)"/>
+        <rect x="0" y="250" width="800" height="50" fill="#3b3d38"/>
+        <rect class="lit" x="0" y="250" width="800" height="50" fill="#6b6250"/>
+        <g class="lit"><rect x="150" y="96" width="150" height="26" rx="2" fill="#d7dae1"/><g fill="#7d8494"><rect x="162" y="104" width="10" height="12"/><rect x="182" y="104" width="10" height="12"/><rect x="202" y="104" width="10" height="12"/><rect x="222" y="104" width="10" height="12"/><rect x="242" y="104" width="10" height="12"/><rect x="262" y="104" width="10" height="12"/><rect x="282" y="104" width="10" height="12"/></g></g>
+        <polygon points="120,150 148,120 176,150 204,120 232,150 260,120 288,150 316,120 344,150 372,120 400,150 428,120 456,150 484,120 512,150 540,120 568,150 596,120 624,150 652,120 680,150" fill="#2b2c33"/>
+        <polygon class="lit" points="120,150 148,120 176,150 204,120 232,150 260,120 288,150 316,120 344,150 372,120 400,150 428,120 456,150 484,120 512,150 540,120 568,150 596,120 624,150 652,120 680,150" fill="#6e3628"/>
+        <rect x="120" y="150" width="560" height="100" fill="#33343c"/>
+        <rect class="lit" x="120" y="150" width="560" height="100" fill="#8a4433"/>
+        <g fill="#20222a"><rect x="160" y="172" width="46" height="66" rx="3"/><rect x="250" y="172" width="46" height="66" rx="3"/><rect x="504" y="172" width="46" height="66" rx="3"/><rect x="594" y="172" width="46" height="66" rx="3"/></g>
+        <g class="lit" fill="#ffd27a"><rect x="164" y="176" width="38" height="58" rx="3"/><rect x="254" y="176" width="38" height="58" rx="3"/><rect x="508" y="176" width="38" height="58" rx="3"/><rect x="598" y="176" width="38" height="58" rx="3"/></g>
+        <rect x="356" y="182" width="88" height="68" rx="4" fill="#20222a"/>
+        <rect class="lit" x="362" y="188" width="76" height="62" rx="3" fill="#caa26a"/>
+        <rect x="636" y="66" width="20" height="84" fill="#2b2c33"/>
+        <rect class="lit" x="636" y="66" width="20" height="84" fill="#8a4433"/>
+        <g class="lit"><rect x="286" y="153" width="228" height="16" rx="4" fill="#101a24"/><text x="400" y="165" fill="#35E0A0" font-size="11" text-anchor="middle" font-weight="700" letter-spacing="1">KULTUR · HANDWERK · WOHNEN</text></g>
+        <g class="lit"><path d="M150 250 q14 -16 28 0 z" fill="#35E0A0"/><rect x="163" y="250" width="2" height="14" fill="#6b5533"/><path d="M600 250 q14 -16 28 0 z" fill="#FFC24B"/><rect x="613" y="250" width="2" height="14" fill="#6b5533"/></g>
+        <g class="lit"><rect x="470" y="240" width="4" height="14" fill="#6b5533"/><circle cx="472" cy="238" r="11" fill="#3f8f5e"/></g>
+        <g class="lit" fill="#e9eff5"><circle cx="220" cy="262" r="3"/><rect x="218.5" y="265" width="3" height="8" rx="1.5"/><circle cx="330" cy="264" r="3"/><rect x="328.5" y="267" width="3" height="8" rx="1.5"/><circle cx="400" cy="262" r="3"/><rect x="398.5" y="265" width="3" height="8" rx="1.5"/><circle cx="540" cy="264" r="3"/><rect x="538.5" y="267" width="3" height="8" rx="1.5"/></g>
+      </svg>
+    </div>
+
+    <div class="status">
+      <div class="warm"><div class="lab"><span>Wärme</span><b id="wlab">kalt</b></div><div class="track"><i id="wfill"></i></div></div>
+      <div class="chips">
+        <div class="chip" id="chA"><span class="who" id="whoA">Eigentümer:in</span><span class="st" id="stA">·</span></div>
+        <div class="chip" id="chB"><span class="who" id="whoB">Stadt</span><span class="st" id="stB">·</span></div>
+      </div>
+    </div>
+    <div class="hint" id="hint">Schieben Sie die Regler und beobachten Sie die Wärme.</div>
+
+    <div class="pols">
+      <div class="grp">
+        <h3 id="gh3A">Gewerbe</h3><div class="side" id="gsideA">Eigentümer:innen und Wirtschaft</div>
+        <div class="sl"><span id="la1">Produktive Arbeitsplätze im Erdgeschoss</span><input type="range" id="a1" min="0" max="100" value="20"></div>
+        <div class="sl"><span id="la2">Investitionssicherheit, klare Baustufen</span><input type="range" id="a2" min="0" max="100" value="20"></div>
+      </div>
+      <div class="grp">
+        <h3 id="gh3B">Wohnen und Ufer</h3><div class="side" id="gsideB">Stadt und Öffentlichkeit</div>
+        <div class="sl"><span id="lb1">Bezahlbarer Wohnraum in den Obergeschossen</span><input type="range" id="b1" min="0" max="100" value="90"></div>
+        <div class="sl"><span id="lb2">Öffentlicher Uferweg für alle</span><input type="range" id="b2" min="0" max="100" value="90"></div>
+      </div>
+    </div>
+
+    <div class="card" id="card">
+      <div class="tag">Gefunden</div>
+      <h2 id="cardh">Ein radikaler Kompromiss</h2>
+      <p id="story"></p>
+      <p class="price">Der Preis: niemand bekommt alles. Genau das macht ihn tragfähig.</p>
+      <div class="actions">
+        <button class="btn2" id="btnBand">Bandbreite zeigen</button>
+        <button class="btn2" id="btnLong">Was könnte das auslösen?</button>
+        <button class="btn2" id="again">Nochmal spielen</button>
+      </div>
+      <div class="panel2 band" id="band">
+        <svg id="bandsvg" viewBox="0 0 440 340" preserveAspectRatio="xMidYMid meet"></svg>
+        <p class="bnote">Sie haben einen von vielen tragfähigen Kompromissen gefunden. Der <b>grüne Bereich</b> ist Ihr Spielraum, die Gestaltungssphäre. Innerhalb tragen beide Seiten, am Rand wackelt es, außerhalb kippt eine Seite. Ein radikaler Kompromiss ist also kein Punkt, sondern eine <b>Bandbreite</b>.</p>
+      </div>
+      <div class="panel2 longstory" id="longstory"><p id="longtext"></p></div>
+    </div>
+    <p class="src" style="margin-top:28px;border-top:1px solid var(--line);padding-top:16px">Grundlage: Klaus Burmeister, „Mit Zielkonflikten und radikalen Kompromissen Zukunft gestalten", in: <a href="https://klaus-burmeister.de/dokumente/2025_IAO_Future-Urban-Economies.pdf" target="_blank" rel="noopener">Future Urban Economies</a> (Fraunhofer IAO, 2025).</p>
+  </div>
+  <div class="gamebar">
+    <button class="cta small" id="btnDone">Fertig, weiter</button>
+  </div>
+  <div style="height:40px"></div>
+</section>
+
+<!-- ============ STAGE 4: QUIZ ============ -->
+<section class="stage" id="st-quiz">
+  <div class="center">
+    <div class="qwrap">
+      <div class="eyebrow">Gut, Sie haben aufgepasst</div>
+      <h2 class="big" style="font-size:clamp(24px,4vw,34px)">Wissen Sie, was ein radikaler Kompromiss ist?</h2>
+      <div class="answers" id="answers">
+        <button class="ans" data-k="1"><span class="n">1</span><span>Radikaler Nonsens.</span></button>
+        <button class="ans" data-k="2"><span class="n">2</span><span>Na ja, gut gedacht, aber.</span></button>
+        <button class="ans" data-k="3"><span class="n">3</span><span>Ah, hier wirkt „der eigentümlich zwanglose Zwang des besseren Arguments".</span></button>
+        <button class="ans" data-k="4"><span class="n">4</span><span>Okay, gute Idee, aber praxisfern.</span></button>
+        <button class="ans" data-k="5"><span class="n">5</span><span>Da möchte ich doch mehr wissen.</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STAGE 5: SIGN ============ -->
+<section class="stage" id="st-sign">
+  <div class="center">
+    <p class="react" id="react"></p>
+    <div class="sign">
+      <button class="plate" data-exit="raus">Ich muss hier raus.<span class="tiny">Zurück nach draußen</span></button>
+      <button class="plate" data-exit="danke">Danke, so geht Zukunft. Und tschüss.<span class="tiny">Zurück nach draußen</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STAGE 6: LEAVING (door closes) ============ -->
+<section class="stage" id="st-leave">
+  <div class="center">
+    <div class="facade-wrap">
+      <div class="night"></div>
+      <div class="roof"></div>
+      <div class="building"></div>
+      <div class="sign-ext">Zukunft im Versuch</div>
+      <div class="name-ext">WerkLab</div>
+      <div class="doorway"><div class="door open" id="door2"></div></div>
+    </div>
+    <div class="spacer"></div>
+    <p class="muted" id="leavetext">Die Tür schließt sich.</p>
+  </div>
+</section>
+
+
+<script>
+(function(){
+  var el=function(id){return document.getElementById(id);};
+  var EMBED=(window.parent!==window);
+
+  /* ---------- energy sparks ---------- */
+  (function sparks(){
+    var n=el('night1'); if(!n) return;
+    var xs=[14,28,42,58,72,86,20,50,80,36,64];
+    var dl=[0,1.2,2.4,.6,3.1,1.8,2.0,.9,2.7,1.5,3.4];
+    for(var i=0;i<xs.length;i++){
+      var s=document.createElement('div'); s.className='spark';
+      s.style.left=xs[i]+'%'; s.style.top=(58+(i%4)*8)+'%';
+      s.style.animationDelay=dl[i]+'s';
+      s.style.background=(i%3===0)?'#35E0A0':(i%3===1?'#24D3C4':'#3AA6FF');
+      n.appendChild(s);
+    }
+  })();
+
+  /* ---------- stage machine ---------- */
+  var order=['st-outside','st-welcome','st-game','st-quiz','st-sign','st-leave'];
+  var inside={'st-welcome':1,'st-game':1,'st-quiz':1,'st-sign':1};
+  function show(id){
+    order.forEach(function(x){ var s=el(x); if(!s)return; s.classList.toggle('on', x===id); s.classList.remove('fading'); });
+    el('btnExit').hidden = !inside[id];
+    el('btnTally').hidden = (id!=='st-outside');
+    if(id!=='st-outside'){ el('tallybox').hidden=true; }
+    window.scrollTo({top:0,behavior:'auto'});
+  }
+  function leaveRoom(text){
+    el('leavetext').textContent = text || 'Die Tür schließt sich.';
+    el('btnExit').hidden = true;
+    var d=el('door2'); d.classList.remove('closing'); d.classList.add('open');
+    void d.offsetWidth;
+    show('st-leave');
+    setTimeout(function(){ d.classList.remove('open'); d.classList.add('closing'); }, 60);
+    el('roomglow').classList.remove('on');
+    setTimeout(function(){
+      if(EMBED){ try{ window.parent.postMessage('werklab-done','*'); }catch(e){} }
+      else { el('door1').classList.remove('open'); fadeTo('st-outside', 700); }
+    }, 1500);
+  }
+  el('btnExit').addEventListener('click',function(){ leaveRoom('Sie gehen wieder hinaus. Die Tür schließt sich.'); });
+  function fadeTo(id, ms){
+    var cur=document.querySelector('.stage.on');
+    if(cur){ cur.classList.add('fading'); }
+    setTimeout(function(){ show(id); }, ms||700);
+  }
+
+  /* Stage 1 -> door opens, room fades, welcome */
+  el('btnYes').addEventListener('click',function(){
+    el('door1').classList.add('open');
+    el('roomglow').classList.add('on');
+    setTimeout(function(){ fadeTo('st-welcome', 700); }, 1150);
+  });
+
+  /* Stage 2 -> game */
+  el('btnStart').addEventListener('click',function(){ fadeTo('st-game', 650); });
+
+  /* Stage 3 -> quiz */
+  el('btnDone').addEventListener('click',function(){ fadeTo('st-quiz', 650); });
+
+  /* Stage 4: answer -> reaction + sign */
+  var REACT={
+    '1':'Radikal? Ja. Nonsens? Wir finden nicht. Aber danke, dass Sie es ausprobiert haben.',
+    '2':'Gut gedacht, ja. Und das <b>aber</b> ist genau der Punkt: Der Kompromiss trägt nur, wenn beide Seiten etwas hergeben.',
+    '3':'Genau. Kein Machtwort, sondern das bessere Argument, das beide Seiten überzeugt. <b>Sie haben es verstanden.</b>',
+    '4':'Praxisfern? Der Versuch zeigt das Gegenteil: An echten Orten, mit echten Interessen, entsteht ein Spielraum, der trägt.',
+    '5':'Schön. Neugier ist der Anfang. <b>Werden Sie unser:e Mitdenkpartner:in.</b>'
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('.ans'),function(b){
+    b.addEventListener('click',function(){
+      var k=b.getAttribute('data-k');
+      countQ(k);
+      el('react').innerHTML=REACT[k]||'';
+      fadeTo('st-sign', 500);
+    });
+  });
+
+  /* Stage 5: sign -> leaving */
+  Array.prototype.forEach.call(document.querySelectorAll('.plate'),function(b){
+    b.addEventListener('click',function(){
+      var mode=b.getAttribute('data-exit');
+      countSign(mode);
+      leaveRoom((mode==='danke') ? 'Danke, dass Sie da waren. Die Tür schließt sich.' : 'Die Tür schließt sich.');
+    });
+  });
+
+  /* ---------- Zählung (lokal) ---------- */
+  var TKEY='werklab_tally_v1';
+  var QLAB={'1':'Radikaler Nonsens','2':'Gut gedacht, aber','3':'Zwang des besseren Arguments','4':'Gute Idee, aber praxisfern','5':'Möchte mehr wissen'};
+  var SLAB={'raus':'Ich muss hier raus','danke':'Danke, so geht Zukunft'};
+  var tally={q:{'1':0,'2':0,'3':0,'4':0,'5':0}, sign:{'raus':0,'danke':0}};
+  try{ var raw=localStorage.getItem(TKEY); if(raw){ var p=JSON.parse(raw); if(p&&p.q&&p.sign){ tally=p; } } }catch(e){}
+  function saveTally(){ try{ localStorage.setItem(TKEY, JSON.stringify(tally)); }catch(e){} }
+  function countQ(k){ tally.q[k]=(tally.q[k]||0)+1; saveTally(); renderTally(); }
+  function countSign(m){ tally.sign[m]=(tally.sign[m]||0)+1; saveTally(); renderTally(); }
+  function renderTally(){
+    var q=''; for(var k in QLAB){ q+='<li><span>'+k+') '+QLAB[k]+'</span><b>'+(tally.q[k]||0)+'</b></li>'; }
+    el('tallyQ').innerHTML=q;
+    var s=''; for(var m in SLAB){ s+='<li><span>'+SLAB[m]+'</span><b>'+(tally.sign[m]||0)+'</b></li>'; }
+    el('tallyS').innerHTML=s;
+  }
+  renderTally();
+  el('btnTally').addEventListener('click',function(){ el('tallybox').hidden=!el('tallybox').hidden; });
+  el('btnTallyClose').addEventListener('click',function(){ el('tallybox').hidden=true; });
+  show('st-outside');
+
+  /* ============ GAME ENGINE ============ */
+  var CASES={
+    behrens:{
+      sub:'Behrens-Ufer: Wohnen gegen Gewerbe', scene:'sceneBehrens',
+      gh3A:'Gewerbe', gsideA:'Eigentümer:innen und Wirtschaft', whoA:'Eigentümer:in',
+      gh3B:'Wohnen und Ufer', gsideB:'Stadt und Öffentlichkeit', whoB:'Stadt',
+      la1:'Produktive Arbeitsplätze im Erdgeschoss', la2:'Investitionssicherheit, klare Baustufen',
+      lb1:'Bezahlbarer Wohnraum in den Obergeschossen', lb2:'Öffentlicher Uferweg für alle',
+      axisA:'mehr Gewerbe', axisB:'mehr Wohnen und Ufer',
+      coldA:'Kälter für die Eigentümer:innen. Geben Sie dem Gewerbe mehr oder fordern Sie weniger Wohnen und Ufer.',
+      coldB:'Kälter für die Stadt. Geben Sie Wohnen und Ufer mehr oder überziehen Sie das Gewerbe nicht.',
+      meister:function(a1,a2,b1,b2){return b2>=60 && b1>=55;},
+      story:function(a1,a2,b1,b2,m){
+        var ufer=b2>=55;
+        var s='Sie haben einen Kompromiss gefunden, der trägt. ';
+        s+='Die Eigentümer:innen geben '+(ufer?'einen offenen Uferweg und etwas Höhe her':'etwas Fläche her')+' und bekommen dafür produktive Erdgeschosse und verlässliche Baustufen. ';
+        s+='Die Stadt gibt die reine Wohnnutzung auf und bekommt '+(b1>=55?'bezahlbare Wohnungen in den Obergeschossen':'Wohnraum')+(ufer?' und einen Uferweg für alle.':'.')+' ';
+        s+='Der Ort gewinnt einen lebendigen Übergang statt einer Mauer.';
+        if(m) s+=' Und weil der Uferweg offen bleibt, wird der Ort für alle stärker, das ist die zukunftsfeste Wahl.';
+        return s;},
+      long:'Ein tragfähiger Kompromiss ist kein Schlusspunkt, er setzt etwas in Gang. Der offene Uferweg bringt Menschen an das Wasser, morgens die Joggenden, mittags die Beschäftigten aus den Werkstätten, abends die Familien. In den produktiven Erdgeschossen siedeln sich Handwerk, ein Reparaturcafé und kleine Studios an, sie beleben die Straße und schaffen Arbeit vor Ort. Die bezahlbaren Wohnungen darüber halten Menschen mit mittleren Einkommen im Kiez, statt sie zu verdrängen. Nach zwei, drei Jahren ist aus dem umstrittenen Ufer ein Ort geworden, an den man gern kommt. Das zieht weitere Vorhaben an, aber unter denselben Spielregeln, weil der erste Kompromiss gezeigt hat, dass es geht. So wächst aus einer einzelnen Aushandlung eine Haltung für den ganzen Standort.'
+    },
+    halle:{
+      sub:'Rathenau-Hallen: Industriekultur gegen Neubau', scene:'sceneHalle',
+      gh3A:'Bestand', gsideA:'Denkmal und Kultur', whoA:'Denkmal',
+      gh3B:'Neubau', gsideB:'Investor:innen und Bedarf', whoB:'Investor:in',
+      la1:'Erhalt der historischen Halle', la2:'Räume für Kultur und Handwerk',
+      lb1:'Neue Wohnungen unter dem alten Dach', lb2:'Wirtschaftliche Tragfähigkeit',
+      axisA:'mehr Bestand', axisB:'mehr Neubau',
+      coldA:'Kälter für die Denkmalseite. Sichern Sie mehr vom Bestand und den Kulturräumen, oder überziehen Sie den Neubau nicht.',
+      coldB:'Kälter für die Investor:innen. Lassen Sie mehr neue Nutzung und Wirtschaftlichkeit zu, oder frieren Sie nicht alles ein.',
+      meister:function(a1,a2,b1,b2){return a2>=58 && b1>=55;},
+      story:function(a1,a2,b1,b2,m){
+        var kultur=a2>=55;
+        var s='Sie haben einen Kompromiss gefunden, der trägt. ';
+        s+='Die Denkmalseite gibt den Anspruch auf, alles unverändert zu lassen, und bekommt dafür eine Halle, die weiter steht'+(kultur?' und Räume für Kultur und Handwerk behält.':'.')+' ';
+        s+='Die Investor:innen geben den reinen Abriss auf und bekommen '+(b1>=55?'neue Wohnungen unter dem alten Dach':'neue Nutzflächen')+', die sich rechnen. ';
+        s+='Der Ort gewinnt einen lebendigen Kulturort statt einer Ruine oder einer Neubauplatte.';
+        if(m) s+=' Und weil Handwerk und Kultur bleiben, behält der Ort seine Identität, das ist die zukunftsfeste Wahl.';
+        return s;},
+      long:'Ein tragfähiger Kompromiss ist kein Schlusspunkt, er setzt etwas in Gang. Unter dem alten Sägezahndach ziehen Werkstätten, ein kleines Theater und Ateliers ein, darüber entstehen Wohnungen mit Blick über die Dächer. Am Wochenende kommt ein Markt in die große Halle, abends ein Konzert. Die Rathenau-Halle, die fast abgerissen worden wäre, wird zum Anker des Quartiers, ein Ort mit Geschichte und Zukunft zugleich. Weil sich die Umnutzung rechnet, trägt sie sich selbst und zeigt anderen Eigentümer:innen, dass Erhalten und Erneuern kein Widerspruch sind. So wird aus einer geretteten Halle ein Vorbild für den ganzen Standort.'
+    }
+  };
+
+  var scenes={behrens:el('sceneBehrens'), halle:el('sceneHalle')};
+  var S={}; ['a1','a2','b1','b2'].forEach(function(k){S[k]=el(k);S[k].addEventListener('input',render);});
+  var wfill=el('wfill'),wlab=el('wlab'),chA=el('chA'),chB=el('chB'),stA=el('stA'),stB=el('stB'),
+      story=el('story'),cardh=el('cardh'),hint=el('hint'),card=el('card'),
+      band=el('band'),bandsvg=el('bandsvg'),longstory=el('longstory'),longtext=el('longtext'),
+      btnBand=el('btnBand'),btnLong=el('btnLong');
+  var CK='behrens', C=CASES[CK], wasFound=false;
+
+  function clamp(v){return Math.max(0,Math.min(100,v));}
+  function ZAf(gA,gB){return clamp(35+0.7*gA-0.55*Math.max(0,gB-58));}
+  function ZBf(gA,gB){return clamp(35+0.7*gB-0.55*Math.max(0,gA-58));}
+  function tragf(gA,gB){return Math.min(ZAf(gA,gB),ZBf(gA,gB));}
+  function colr(t){return t>=70?'rgba(53,224,160,.60)':(t>=52?'rgba(255,194,75,.42)':(t>=38?'rgba(255,122,32,.30)':'rgba(58,166,255,.16)'));}
+  var BX0=54,BY0=24,BW=356,BH=270;
+  function gx(g){return BX0+BW*(g/100);}
+  function gy(g){return BY0+BH*(1-g/100);}
+  function buildBand(){
+    var s='',step=5;
+    for(var cx=0;cx<100;cx+=step){for(var cy=0;cy<100;cy+=step){
+      var t=tragf(cx+step/2,cy+step/2), x=gx(cx), y=gy(cy+step);
+      s+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+(BW/20+0.6).toFixed(1)+'" height="'+(BH/20+0.6).toFixed(1)+'" fill="'+colr(t)+'"/>';
+    }}
+    s+='<rect x="'+BX0+'" y="'+BY0+'" width="'+BW+'" height="'+BH+'" fill="none" stroke="rgba(255,255,255,.14)"/>';
+    s+='<text x="'+(BX0+BW/2)+'" y="'+(BY0+BH+30)+'" fill="#9aa7b4" font-size="12" text-anchor="middle">'+C.axisA+' →</text>';
+    s+='<text x="'+(BX0-14)+'" y="'+(BY0+BH/2)+'" fill="#9aa7b4" font-size="12" text-anchor="middle" transform="rotate(-90 '+(BX0-14)+' '+(BY0+BH/2)+')">'+C.axisB+' ↑</text>';
+    s+='<circle id="banddot" r="7" fill="#fff" stroke="#0c1219" stroke-width="2.5"/>';
+    bandsvg.innerHTML=s;
+  }
+  function updateDot(gA,gB){var d=el('banddot');if(d){d.setAttribute('cx',gx(gA));d.setAttribute('cy',gy(gB));}}
+  function chip(e,st,val){e.className='chip '+(val>=68?'ok':(val>=50?'wob':'out'));st.textContent=val>=68?'geht mit':(val>=50?'wackelt':'steigt aus');}
+
+  function render(){
+    var a1=+S.a1.value,a2=+S.a2.value,b1=+S.b1.value,b2=+S.b2.value;
+    var gA=(a1+a2)/2, gB=(b1+b2)/2;
+    var ZA=ZAf(gA,gB), ZB=ZBf(gA,gB), trag=Math.min(ZA,ZB);
+    var found=trag>=70, meister=found && C.meister(a1,a2,b1,b2);
+    wfill.style.width=trag+'%';
+    wfill.style.background=trag>=70?'linear-gradient(90deg,#35E0A0,#3AA6FF)':(trag>=52?'#FFC24B':(trag>=38?'#FF9A4B':'#3AA6FF'));
+    wlab.textContent=trag>=70?'heiß, gefunden':(trag>=58?'warm':(trag>=44?'lau':'kalt'));
+    chip(chA,stA,ZA);chip(chB,stB,ZB);
+    if(!found){ hint.textContent = ZA<ZB ? C.coldA : (ZB<ZA ? C.coldB : 'Beide noch nicht zufrieden. Tasten Sie sich an die Balance heran.'); }
+    else { hint.textContent = meister ? 'Heiß, und sogar die zukunftsfeste Variante.' : 'Heiß. Ein tragfähiger Kompromiss.'; }
+    var sc=scenes[CK];
+    sc.classList.toggle('found',found);
+    card.classList.toggle('show',found);
+    if(el('banddot')) updateDot(gA,gB);
+    if(found){
+      cardh.innerHTML = meister ? 'Ein radikaler Kompromiss <span class="star">★</span>' : 'Ein radikaler Kompromiss';
+      story.textContent = C.story(a1,a2,b1,b2,meister);
+      longtext.textContent = C.long;
+      if(!wasFound){ sc.classList.remove('found'); void sc.offsetWidth; sc.classList.add('found'); }
+    } else {
+      band.classList.remove('show'); longstory.classList.remove('show');
+      btnBand.classList.remove('on'); btnLong.classList.remove('on');
+    }
+    wasFound=found;
+  }
+
+  function setCase(k){
+    CK=k; C=CASES[k];
+    el('sub').textContent=C.sub;
+    el('gh3A').textContent=C.gh3A; el('gsideA').textContent=C.gsideA; el('whoA').textContent=C.whoA;
+    el('gh3B').textContent=C.gh3B; el('gsideB').textContent=C.gsideB; el('whoB').textContent=C.whoB;
+    el('la1').textContent=C.la1; el('la2').textContent=C.la2; el('lb1').textContent=C.lb1; el('lb2').textContent=C.lb2;
+    for(var s in scenes){ scenes[s].style.display = (s===k)?'block':'none'; scenes[s].classList.remove('found'); }
+    S.a1.value=20;S.a2.value=20;S.b1.value=90;S.b2.value=90; wasFound=false;
+    band.classList.remove('show'); longstory.classList.remove('show'); btnBand.classList.remove('on'); btnLong.classList.remove('on');
+    buildBand(); render();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.lvl'),function(b){
+    b.addEventListener('click',function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.lvl'),function(x){x.classList.remove('on');});
+      b.classList.add('on'); setCase(b.getAttribute('data-c'));
+    });
+  });
+  btnBand.addEventListener('click',function(){
+    var a1=+S.a1.value,a2=+S.a2.value,b1=+S.b1.value,b2=+S.b2.value; updateDot((a1+a2)/2,(b1+b2)/2);
+    var open=band.classList.toggle('show'); btnBand.classList.toggle('on',open);
+  });
+  btnLong.addEventListener('click',function(){var open=longstory.classList.toggle('show');btnLong.classList.toggle('on',open);});
+  el('again').addEventListener('click',function(){
+    S.a1.value=20;S.a2.value=20;S.b1.value=90;S.b2.value=90;wasFound=false;render();
+  });
+  buildBand(); render();
+})();
+</script>
+</body>
+</html>
